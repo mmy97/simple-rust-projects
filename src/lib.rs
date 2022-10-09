@@ -1,7 +1,9 @@
 pub mod game {
 
+    const GRID_SIZE: usize = 3;
+
     pub struct Game {
-        pub grid: [[Option<Marker>; 3]; 3],
+        pub grid: [[Option<Marker>; GRID_SIZE]; GRID_SIZE],
         pub winner: Option<Winner>,
         pub current_turn: Marker,
     }
