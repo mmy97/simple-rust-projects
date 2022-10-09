@@ -4,24 +4,19 @@
 
 Game
 
-    - new() -> Game
-    - mark(x,y) -> Result<Ok, Err>
-    - state() -> State
-
-State
-
-    - grid: Grid
+    - grid: [[Option<Marker>; 3] ; 3]
     - winner: Option<Winner>
-    - current_turn: Mark
+    - current_turn: Marker
 
-Grid
+    - factory new() -> Game
+    - mark(x,y) -> Result<Ok, Err>
+    - state() -> Game
 
-    - tiles: [[Mark; 3] ; 3]
 
 Winner 
 
-    Mark | Tie
+    O | X | Draw
 
-Mark
+Marker
 
     O | X
