@@ -17,7 +17,8 @@ pub mod game {
             }
         }
 
-        pub fn mark(&mut self, x: u8, y: u8) -> Result<(), InvalidChoice> {
+        pub fn mark(&mut self, x: usize, y: usize) -> Result<(), InvalidChoice> {
+            self.grid[x][y] = Some(self.current_turn);
             self.swap_turns();
             Ok(())
         }
@@ -35,7 +36,7 @@ pub mod game {
 
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum Marker {
         X,
         O,
