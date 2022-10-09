@@ -14,6 +14,23 @@ pub mod game {
                 current_turn: Marker::X,
             }
         }
+
+        pub fn mark(&mut self, x: u8, y: u8) -> Result<(), InvalidChoice> {
+            self.swap_turns();
+            Ok(())
+        }
+
+        fn swap_turns(&mut self) {
+            self.current_turn = match self.current_turn {
+                Marker::X => Marker::O,
+                Marker::O => Marker::X
+            }
+        }
+    }
+
+    #[derive(Debug, PartialEq)]
+    pub enum InvalidChoice {
+
     }
 
     #[derive(Debug, PartialEq)]
