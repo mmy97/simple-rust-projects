@@ -1,5 +1,6 @@
 use Marker::{O, X};
 use tic_tac_toe::game::{Game, Marker};
+use tic_tac_toe::game::InvalidChoice::LocationOutOfBounds;
 
 #[test]
 fn empty_grid_on_new_game() {
@@ -77,6 +78,20 @@ fn mark_updates_grid_2_1() {
 #[test]
 fn mark_updates_grid_2_2() {
     mark_on_new_game_then_assert_grid_updated(2, 2);
+}
+
+#[test]
+fn cannot_mark_out_of_bounds_x() {
+    let mut game: Game = Game::new();
+    let error = game.mark(3, 0).err().unwrap();
+    assert_eq!(error, LocationOutOfBounds)
+}
+
+#[test]
+fn cannot_mark_out_of_bounds_y() {
+    let mut game: Game = Game::new();
+    let error = game.mark(0, 3).err().unwrap();
+    assert_eq!(error, LocationOutOfBounds)
 }
 
 fn mark_on_new_game_then_assert_grid_updated(x: usize, y: usize) {

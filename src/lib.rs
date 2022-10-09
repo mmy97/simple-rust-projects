@@ -1,4 +1,5 @@
 pub mod game {
+    use crate::game::InvalidChoice::LocationOutOfBounds;
 
     const GRID_SIZE: usize = 3;
 
@@ -18,6 +19,10 @@ pub mod game {
         }
 
         pub fn mark(&mut self, x: usize, y: usize) -> Result<(), InvalidChoice> {
+            if x >= GRID_SIZE || y >= GRID_SIZE {
+                return Err(LocationOutOfBounds)
+            }
+
             self.grid[x][y] = Some(self.current_turn);
             self.swap_turns();
             Ok(())
@@ -33,7 +38,7 @@ pub mod game {
 
     #[derive(Debug, PartialEq)]
     pub enum InvalidChoice {
-
+        LocationOutOfBounds
     }
 
     #[derive(Debug, PartialEq, Clone, Copy)]
