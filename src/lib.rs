@@ -1,5 +1,5 @@
 pub mod game {
-    use crate::game::InvalidChoice::LocationOutOfBounds;
+    use crate::game::CannotMark::{LocationNotEmpty, LocationOutOfBounds};
 
     const GRID_SIZE: usize = 3;
 
@@ -18,9 +18,13 @@ pub mod game {
             }
         }
 
-        pub fn mark(&mut self, x: usize, y: usize) -> Result<(), InvalidChoice> {
+        pub fn mark(&mut self, x: usize, y: usize) -> Result<(), CannotMark> {
             if x >= GRID_SIZE || y >= GRID_SIZE {
                 return Err(LocationOutOfBounds)
+            }
+
+            if self.grid[x][y].is_some() {
+                return Err(LocationNotEmpty)
             }
 
             self.grid[x][y] = Some(self.current_turn);
@@ -37,8 +41,9 @@ pub mod game {
     }
 
     #[derive(Debug, PartialEq)]
-    pub enum InvalidChoice {
-        LocationOutOfBounds
+    pub enum CannotMark {
+        LocationOutOfBounds,
+        LocationNotEmpty
     }
 
     #[derive(Debug, PartialEq, Clone, Copy)]
