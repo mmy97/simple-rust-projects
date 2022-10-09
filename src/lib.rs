@@ -16,11 +16,13 @@ pub mod game {
         }
     }
 
+    #[derive(Debug, PartialEq)]
     pub enum Marker {
         X,
         O,
     }
 
+    #[derive(Debug, PartialEq)]
     pub enum Winner {
         O,
         X,
