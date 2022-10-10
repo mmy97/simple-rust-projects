@@ -1,6 +1,7 @@
 use Marker::{O, X};
-use tic_tac_toe::game::{Game, Marker};
+use tic_tac_toe::game::{Game, Marker, Outcome};
 use tic_tac_toe::game::CannotMark::{LocationNotEmpty, LocationOutOfBounds};
+use tic_tac_toe::game::Outcome::Winner;
 
 #[test]
 fn empty_grid_on_new_game() {
@@ -23,7 +24,7 @@ fn crosses_start() {
 #[test]
 fn no_winner_initially() {
     let game: Game = Game::new();
-    assert_eq!(game.winner, None);
+    assert_eq!(game.outcome, None);
 }
 
 #[test]
@@ -100,6 +101,17 @@ fn cannot_choose_same_location_twice() {
     game.mark(0, 0).unwrap();
     let error = game.mark(0, 0).err().unwrap();
     assert_eq!(error, LocationNotEmpty)
+}
+
+#[test]
+fn x_wins_top_row() {
+    let mut game: Game = Game::new();
+    game.mark(0, 0).unwrap();
+    game.mark(0, 1).unwrap();
+    game.mark(1, 0).unwrap();
+    game.mark(0, 2).unwrap();
+    game.mark(2, 0).unwrap();
+    assert_eq!(game.outcome.unwrap(), Winner(X))
 }
 
 fn mark_on_new_game_then_assert_grid_updated(x: usize, y: usize) {

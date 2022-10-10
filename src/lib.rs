@@ -1,11 +1,14 @@
 pub mod game {
+    use Marker::O;
     use crate::game::CannotMark::{LocationNotEmpty, LocationOutOfBounds};
+    use crate::game::Marker::X;
+    use crate::game::Outcome::Winner;
 
     const GRID_SIZE: usize = 3;
 
     pub struct Game {
         pub grid: [[Option<Marker>; GRID_SIZE]; GRID_SIZE],
-        pub winner: Option<Winner>,
+        pub outcome: Option<Outcome>,
         pub current_turn: Marker,
     }
 
@@ -13,8 +16,8 @@ pub mod game {
         pub fn new() -> Self {
             Game {
                 grid: Default::default(),
-                winner: None,
-                current_turn: Marker::X,
+                outcome: None,
+                current_turn: X,
             }
         }
 
@@ -27,15 +30,32 @@ pub mod game {
                 return Err(LocationNotEmpty)
             }
 
-            self.grid[x][y] = Some(self.current_turn);
+            self.mark_grid(x, y);
+
+            self.update_outcome();
+
             self.swap_turns();
             Ok(())
         }
 
         fn swap_turns(&mut self) {
             self.current_turn = match self.current_turn {
-                Marker::X => Marker::O,
-                Marker::O => Marker::X
+                X => O,
+                O => X
+            }
+        }
+
+        fn mark_grid(&mut self, x: usize, y: usize) {
+            self.grid[x][y] = Some(self.current_turn);
+        }
+
+        fn update_outcome(&mut self) {
+            let top_left = self.grid[0][0];
+            let top_centre = self.grid[1][0];
+            let top_right = self.grid[2][0];
+
+            if top_left == top_centre && top_centre == top_right {
+                self.outcome = Some(Winner(X));
             }
         }
     }
@@ -53,9 +73,8 @@ pub mod game {
     }
 
     #[derive(Debug, PartialEq)]
-    pub enum Winner {
-        O,
-        X,
+    pub enum Outcome {
+        Winner(Marker),
         Draw,
     }
 }
