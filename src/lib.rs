@@ -6,6 +6,18 @@ pub mod game {
 
     const GRID_SIZE: usize = 3;
 
+    #[derive(Debug, PartialEq, Clone, Copy)]
+    pub enum Marker {
+        X,
+        O,
+    }
+
+    #[derive(Debug, PartialEq)]
+    pub enum Outcome {
+        Winner(Marker),
+        Draw,
+    }
+
     pub struct Game {
         pub grid: [[Option<Marker>; GRID_SIZE]; GRID_SIZE],
         pub outcome: Option<Outcome>,
@@ -101,15 +113,4 @@ pub mod game {
         LocationNotEmpty,
     }
 
-    #[derive(Debug, PartialEq, Clone, Copy)]
-    pub enum Marker {
-        X,
-        O,
-    }
-
-    #[derive(Debug, PartialEq)]
-    pub enum Outcome {
-        Winner(Marker),
-        Draw,
-    }
 }
