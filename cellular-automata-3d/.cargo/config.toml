@@ -1,0 +1,3 @@
+[target.aarch64-apple-darwin]
+linker = "clang"
+rustflags = ["-Clink-arg=-fuse-ld=/usr/local/Cellar/mold/1.5.1/bin/ld64.mold"]
