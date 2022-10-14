@@ -112,5 +112,4 @@ pub mod game {
         LocationOutOfBounds,
         LocationNotEmpty,
     }
-
 }
