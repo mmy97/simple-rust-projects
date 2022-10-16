@@ -46,7 +46,3 @@ fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Na
         }
     }
 }
-
-fn hello_world() {
-    println!("hello world!");
-}

@@ -1,5 +1,5 @@
 [package]
-name = "cellular-automata-3d"
+name = "bevy-tutorial"
 version = "0.1.0"
 edition = "2021"
 

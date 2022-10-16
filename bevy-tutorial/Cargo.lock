@@ -177,6 +177,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-tutorial"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_animation"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -909,13 +916,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 dependencies = [
  "jobserver",
-]
-
-[[package]]
-name = "cellular-automata-3d"
-version = "0.1.0"
-dependencies = [
- "bevy",
 ]
 
 [[package]]
