@@ -1,4 +1,3 @@
-use crate::Direction::{DOWN, LEFT, RIGHT, UP};
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::ButtonState::Pressed;
 use bevy::prelude::*;
@@ -27,10 +26,10 @@ struct Snake;
 
 #[derive(Component, Debug)]
 enum Direction {
-    UP,
-    RIGHT,
-    DOWN,
-    LEFT,
+    Up,
+    Right,
+    Down,
+    Left,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -45,10 +44,11 @@ struct Body(Vec<Position>);
 struct MoveTimer(Timer);
 
 fn spawn_snake(mut commands: Commands) {
+    commands.spawn_bundle(Camera2dBundle::default());
     commands
         .spawn()
         .insert(Snake)
-        .insert(Direction::RIGHT)
+        .insert(Direction::Right)
         .insert(Body(vec![
             Position { x: 0, y: 0 },
             Position { x: -1, y: 0 },
@@ -69,10 +69,10 @@ fn move_snake(
         let mut head = body.0.first_mut().unwrap().clone();
 
         match direction {
-            UP => head.y += 1,
-            RIGHT => head.x += 1,
-            DOWN => head.y -= 1,
-            LEFT => head.x -= 1,
+            Direction::Up => head.y += 1,
+            Direction::Right => head.x += 1,
+            Direction::Down => head.y -= 1,
+            Direction::Left => head.x -= 1,
         }
 
         body.0.insert(0, head);
@@ -95,10 +95,10 @@ fn take_keyboard_input(
         .flatten();
 
     match key {
-        Some(Up) => *direction = UP,
-        Some(Right) => *direction = RIGHT,
-        Some(Down) => *direction = DOWN,
-        Some(Left) => *direction = LEFT,
+        Some(KeyCode::Up) => *direction = Direction::Up,
+        Some(KeyCode::Right) => *direction = Direction::Right,
+        Some(KeyCode::Down) => *direction = Direction::Down,
+        Some(KeyCode::Left) => *direction = Direction::Left,
         _ => {}
     };
 }
