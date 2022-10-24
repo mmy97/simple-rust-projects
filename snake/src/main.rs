@@ -48,10 +48,7 @@ impl Plugin for SnakePlugin {
 struct Snake(i8);
 
 #[derive(Component, Copy, Clone, Debug)]
-struct Segment {
-    position: Position,
-    order: i8,
-}
+struct Segment(u8);
 
 #[derive(Component, Debug)]
 enum Direction {
@@ -84,10 +81,8 @@ fn spawn_snake(mut commands: Commands) {
         })
         .insert(Snake(1))
         .insert(Direction::Right)
-        .insert(Segment {
-            position: Position { x: 5, y: 3 },
-            order: 0,
-        });
+        .insert(Segment(0))
+        .insert(Position { x: 5, y: 3 });
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -98,10 +93,8 @@ fn spawn_snake(mut commands: Commands) {
             ..default()
         })
         .insert(Snake(1))
-        .insert(Segment {
-            position: Position { x: 4, y: 3 },
-            order: 1,
-        });
+        .insert(Segment(1))
+        .insert(Position { x: 4, y: 3 });
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -112,10 +105,8 @@ fn spawn_snake(mut commands: Commands) {
             ..default()
         })
         .insert(Snake(1))
-        .insert(Segment {
-            position: Position { x: 3, y: 3 },
-            order: 2,
-        });
+        .insert(Segment(2))
+        .insert(Position { x: 3, y: 3 });
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -126,23 +117,24 @@ fn spawn_snake(mut commands: Commands) {
             ..default()
         })
         .insert(Snake(1))
-        .insert(Segment {
-            position: Position { x: 2, y: 3 },
-            order: 3,
-        });
+        .insert(Segment(3))
+        .insert(Position { x: 2, y: 3 });
 }
 
-fn position_translation(windows: Res<Windows>, mut q: Query<(&Segment, &mut Transform)>) {
+fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Transform)>) {
     fn convert(pos: f32, bound_window: f32, bound_game: f32) -> f32 {
         let tile_size = bound_window / bound_game;
         pos / bound_game * bound_window - (bound_window / 2.) + (tile_size / 2.)
     }
     let window = windows.get_primary().unwrap();
-    for (segment, mut transform) in q.iter_mut() {
-        let pos = segment.position;
+    for (position, mut transform) in q.iter_mut() {
         transform.translation = Vec3::new(
-            convert(pos.x as f32, window.width() as f32, ARENA_WIDTH as f32),
-            convert(pos.y as f32, window.height() as f32, ARENA_HEIGHT as f32),
+            convert(position.x as f32, window.width() as f32, ARENA_WIDTH as f32),
+            convert(
+                position.y as f32,
+                window.height() as f32,
+                ARENA_HEIGHT as f32,
+            ),
             0.0,
         );
         transform.scale = Vec3::new(50.0, 50.0, 1.0);
@@ -152,34 +144,36 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Segment, &mut Tran
 fn move_snake(
     time: Res<Time>,
     mut timer: ResMut<MoveTimer>,
-    mut query: Query<(&Snake, &mut Segment, Option<&Direction>)>,
+    mut query: Query<(&Snake, &Segment, &mut Position, Option<&Direction>)>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        let mut head: (&Snake, Mut<Segment>, Option<&Direction>) =
-            query.iter_mut().find(|x| x.1.order == 0).unwrap();
+        let (snake_id, segment_number, mut position, direction): (
+            &Snake,
+            &Segment,
+            Mut<Position>,
+            Option<&Direction>,
+        ) = query.iter_mut().find(|x| x.1 .0 == 0).unwrap();
 
-        let mut prev_segment_x = head.1.position.x;
-        let mut prev_segment_y = head.1.position.y;
-        let mut prev_segment_order = head.1.order;
+        let mut prev_segment_x = position.x;
+        let mut prev_segment_y = position.y;
+        let mut prev_segment_order = segment_number.0;
 
-        match head.2 {
+        match direction {
             None => (),
-            Some(Direction::Up) => head.1.position.y += 1,
-            Some(Direction::Right) => head.1.position.x += 1,
-            Some(Direction::Down) => head.1.position.y -= 1,
-            Some(Direction::Left) => head.1.position.x -= 1,
+            Some(Direction::Up) => position.y += 1,
+            Some(Direction::Right) => position.x += 1,
+            Some(Direction::Down) => position.y -= 1,
+            Some(Direction::Left) => position.x -= 1,
         }
 
-        while let Some(mut next) = query
-            .iter_mut()
-            .find(|x| x.1.order == prev_segment_order + 1)
+        while let Some((next_snake_id, next_segment_number, mut next_position, next_direction)) =
+            query.iter_mut().find(|x| x.1 .0 == prev_segment_order + 1)
         {
-            let mut next_segment: Mut<Segment> = next.1;
-            let next_segment_x_copy = next_segment.position.x;
-            let next_segment_y_copy = next_segment.position.y;
-            let next_segment_order_copy = next_segment.order;
-            next_segment.position.y = prev_segment_y;
-            next_segment.position.x = prev_segment_x;
+            let next_segment_x_copy = next_position.x;
+            let next_segment_y_copy = next_position.y;
+            let next_segment_order_copy = next_segment_number.0;
+            next_position.y = prev_segment_y;
+            next_position.x = prev_segment_x;
             prev_segment_x = next_segment_x_copy;
             prev_segment_y = next_segment_y_copy;
             prev_segment_order = next_segment_order_copy;
