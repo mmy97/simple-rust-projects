@@ -130,12 +130,12 @@ fn move_snake(
     mut query: Query<(&Snake, &mut Segment, Option<&Direction>)>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        // let mut segments: Vec<(&Snake, Mut<Segment>, Option<&Direction>)> =
-        //     query.iter_mut().collect();
-        // segments.sort_by(|a, b| b.1.order.cmp(&a.1.order));
-
         let mut head: (&Snake, Mut<Segment>, Option<&Direction>) =
             query.iter_mut().find(|x| x.1.order == 0).unwrap();
+
+        let mut prev_segment_x = head.1.position.x;
+        let mut prev_segment_y = head.1.position.y;
+        let mut prev_segment_order = head.1.order;
 
         match head.2 {
             None => (),
@@ -145,7 +145,20 @@ fn move_snake(
             Some(Direction::Left) => head.1.position.x -= 1,
         }
 
-        println!("{:?}", head);
+        while let Some(mut next) = query
+            .iter_mut()
+            .find(|x| x.1.order == prev_segment_order + 1)
+        {
+            let mut next_segment: Mut<Segment> = next.1;
+            let next_segment_x_copy = next_segment.position.x;
+            let next_segment_y_copy = next_segment.position.y;
+            let next_segment_order_copy = next_segment.order;
+            next_segment.position.y = prev_segment_y;
+            next_segment.position.x = prev_segment_x;
+            prev_segment_x = next_segment_x_copy;
+            prev_segment_y = next_segment_y_copy;
+            prev_segment_order = next_segment_order_copy;
+        }
     }
 }
 
