@@ -29,16 +29,14 @@ pub struct SnakePlugin;
 impl Plugin for SnakePlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_snake)
+            .add_startup_system(spawn_food)
+            .add_startup_system(load_assets)
             .add_system(take_keyboard_input)
+            .add_system(eat)
             .add_system_set(
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(0.2))
                     .with_system(move_snake),
-            )
-            .add_system_set(
-                SystemSet::new()
-                    .with_run_criteria(FixedTimestep::step(1.0))
-                    .with_system(spawn_food),
             )
             .add_system_set_to_stage(
                 CoreStage::PostUpdate,
@@ -61,7 +59,7 @@ enum Direction {
     Left,
 }
 
-#[derive(Component, Debug, Copy, Clone)]
+#[derive(Component, Debug, Copy, Clone, PartialEq)]
 struct Position {
     x: i8,
     y: i8,
@@ -69,6 +67,17 @@ struct Position {
 
 #[derive(Component, Debug)]
 struct Food;
+
+struct SnakeSprite(Vec<HandleUntyped>);
+
+fn load_assets(mut commands: Commands, server: Res<AssetServer>) {
+    match server.load_folder("sprites") {
+        Ok(handles) => commands.insert_resource(SnakeSprite(handles)),
+        Err(err) => {
+            println!("{:?}", err)
+        }
+    }
+}
 
 fn spawn_snake(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -176,7 +185,7 @@ fn move_snake(mut query: Query<(&Snake, &Segment, &mut Position, Option<&Directi
     }
 }
 
-fn spawn_food(mut commands: Commands) {
+fn spawn_food(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(SpriteBundle {
             sprite: Sprite {
@@ -190,6 +199,21 @@ fn spawn_food(mut commands: Commands) {
             x: thread_rng().gen_range((0..ARENA_WIDTH)),
             y: thread_rng().gen_range((0..ARENA_HEIGHT)),
         });
+}
+
+fn eat(
+    mut commands: Commands,
+    food_positions: Query<(Entity, &Position), With<Food>>,
+    segment_positions: Query<(&Position, &Segment)>,
+) {
+    let (entity, food_position): (Entity, &Position) = match food_positions.get_single() {
+        Ok(i) => i,
+        Err(err) => return,
+    };
+    let head_position = segment_positions.iter().find(|i| i.1 .0 == 0).unwrap().0;
+    if head_position == food_position {
+        commands.entity(entity).despawn();
+    }
 }
 
 fn take_keyboard_input(
