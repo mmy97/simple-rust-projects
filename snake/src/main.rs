@@ -2,10 +2,13 @@ use bevy::ecs::query::QueryIter;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::ButtonState::Pressed;
 use bevy::prelude::*;
+use bevy::time::FixedTimestep;
+use rand::{random, thread_rng, Rng};
 use KeyCode::{Down, Left, Right, Up};
 
-const ARENA_WIDTH: u32 = 10;
-const ARENA_HEIGHT: u32 = 10;
+const ARENA_WIDTH: i8 = 10;
+const ARENA_HEIGHT: i8 = 10;
+const FOOD_COLOR: Color = Color::rgb(1.0, 0.0, 1.0);
 
 fn main() {
     App::new()
@@ -29,6 +32,11 @@ impl Plugin for SnakePlugin {
             .add_startup_system(spawn_snake)
             .add_system(move_snake)
             .add_system(take_keyboard_input)
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(FixedTimestep::step(1.0))
+                    .with_system(spawn_food),
+            )
             .add_system_set_to_stage(
                 CoreStage::PostUpdate,
                 SystemSet::new().with_system(position_translation),
@@ -53,11 +61,14 @@ enum Direction {
     Left,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Component, Debug, Copy, Clone)]
 struct Position {
     x: i8,
     y: i8,
 }
+
+#[derive(Component, Debug)]
+struct Food;
 
 struct MoveTimer(Timer);
 
@@ -104,6 +115,20 @@ fn spawn_snake(mut commands: Commands) {
         .insert(Segment {
             position: Position { x: 3, y: 3 },
             order: 2,
+        });
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0.3, 0.3, 0.3),
+                ..default()
+            },
+            ..default()
+        })
+        .insert(Snake(1))
+        .insert(Segment {
+            position: Position { x: 2, y: 3 },
+            order: 3,
         });
 }
 
@@ -160,6 +185,22 @@ fn move_snake(
             prev_segment_order = next_segment_order_copy;
         }
     }
+}
+
+fn spawn_food(mut commands: Commands) {
+    commands
+        .spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: FOOD_COLOR,
+                ..default()
+            },
+            ..default()
+        })
+        .insert(Food)
+        .insert(Position {
+            x: thread_rng().gen_range((0..ARENA_WIDTH)),
+            y: thread_rng().gen_range((0..ARENA_HEIGHT)),
+        });
 }
 
 fn take_keyboard_input(
