@@ -2,6 +2,7 @@ use bevy::ecs::query::QueryIter;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::ButtonState::Pressed;
 use bevy::prelude::*;
+use bevy::render::render_resource::BlendOperation::Add;
 use bevy::time::FixedTimestep;
 use rand::{random, thread_rng, Rng};
 use KeyCode::{Down, Left, Right, Up};
@@ -29,10 +30,11 @@ pub struct SnakePlugin;
 impl Plugin for SnakePlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_snake)
-            .add_startup_system(spawn_food)
             .add_startup_system(load_assets)
             .add_system(take_keyboard_input)
+            .add_system(spawn_food)
             .add_event::<Grow>()
+            .add_event::<AddFood>()
             .add_system(eat)
             .add_system(grow)
             .add_system_set(
@@ -131,6 +133,20 @@ fn spawn_snake(mut commands: Commands) {
         .insert(Snake(1))
         .insert(Segment(3))
         .insert(Position { x: 2, y: 3 });
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: FOOD_COLOR,
+                ..default()
+            },
+            ..default()
+        })
+        .insert(Food)
+        .insert(Position {
+            x: thread_rng().gen_range((0..ARENA_WIDTH)),
+            y: thread_rng().gen_range((0..ARENA_HEIGHT)),
+        });
 }
 
 fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Transform)>) {
@@ -187,32 +203,38 @@ fn move_snake(mut query: Query<(&Snake, &Segment, &mut Position, Option<&Directi
     }
 }
 
-fn spawn_food(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: FOOD_COLOR,
+fn spawn_food(
+    mut commands: Commands,
+    mut add_food_reader: EventReader<AddFood>,
+    asset_server: Res<AssetServer>,
+) {
+    if add_food_reader.iter().next().is_some() {
+        commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: FOOD_COLOR,
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        })
-        .insert(Food)
-        .insert(Position {
-            x: thread_rng().gen_range((0..ARENA_WIDTH)),
-            y: thread_rng().gen_range((0..ARENA_HEIGHT)),
-        });
+            })
+            .insert(Food)
+            .insert(Position {
+                x: thread_rng().gen_range((0..ARENA_WIDTH)),
+                y: thread_rng().gen_range((0..ARENA_HEIGHT)),
+            });
+    }
 }
 
 struct Grow;
-
+struct AddFood;
 fn grow(
     mut commands: Commands,
     segments: Query<(&Segment, &Position)>,
     mut growth_reader: EventReader<Grow>,
+    mut add_food_writer: EventWriter<AddFood>,
 ) {
     if growth_reader.iter().next().is_some() {
         let tail_end = segments.iter().max_by(|a, b| a.0 .0.cmp(&b.0 .0));
-        println!("{:?}", tail_end);
         commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -224,6 +246,7 @@ fn grow(
             .insert(Snake(1))
             .insert(Segment(tail_end.unwrap().0 .0 + 1))
             .insert(tail_end.unwrap().1.clone());
+        add_food_writer.send(AddFood)
     }
 }
 
