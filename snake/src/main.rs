@@ -28,10 +28,13 @@ pub struct SnakePlugin;
 
 impl Plugin for SnakePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(MoveTimer(Timer::from_seconds(0.3, true)))
-            .add_startup_system(spawn_snake)
-            .add_system(move_snake)
+        app.add_startup_system(spawn_snake)
             .add_system(take_keyboard_input)
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(FixedTimestep::step(0.2))
+                    .with_system(move_snake),
+            )
             .add_system_set(
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(1.0))
@@ -66,8 +69,6 @@ struct Position {
 
 #[derive(Component, Debug)]
 struct Food;
-
-struct MoveTimer(Timer);
 
 fn spawn_snake(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -141,43 +142,37 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     }
 }
 
-fn move_snake(
-    time: Res<Time>,
-    mut timer: ResMut<MoveTimer>,
-    mut query: Query<(&Snake, &Segment, &mut Position, Option<&Direction>)>,
-) {
-    if timer.0.tick(time.delta()).just_finished() {
-        let (snake_id, segment_number, mut position, direction): (
-            &Snake,
-            &Segment,
-            Mut<Position>,
-            Option<&Direction>,
-        ) = query.iter_mut().find(|x| x.1 .0 == 0).unwrap();
+fn move_snake(mut query: Query<(&Snake, &Segment, &mut Position, Option<&Direction>)>) {
+    let (snake_id, segment_number, mut position, direction): (
+        &Snake,
+        &Segment,
+        Mut<Position>,
+        Option<&Direction>,
+    ) = query.iter_mut().find(|x| x.1 .0 == 0).unwrap();
 
-        let mut prev_segment_x = position.x;
-        let mut prev_segment_y = position.y;
-        let mut prev_segment_order = segment_number.0;
+    let mut prev_segment_x = position.x;
+    let mut prev_segment_y = position.y;
+    let mut prev_segment_order = segment_number.0;
 
-        match direction {
-            None => (),
-            Some(Direction::Up) => position.y += 1,
-            Some(Direction::Right) => position.x += 1,
-            Some(Direction::Down) => position.y -= 1,
-            Some(Direction::Left) => position.x -= 1,
-        }
+    match direction {
+        None => (),
+        Some(Direction::Up) => position.y += 1,
+        Some(Direction::Right) => position.x += 1,
+        Some(Direction::Down) => position.y -= 1,
+        Some(Direction::Left) => position.x -= 1,
+    }
 
-        while let Some((next_snake_id, next_segment_number, mut next_position, next_direction)) =
-            query.iter_mut().find(|x| x.1 .0 == prev_segment_order + 1)
-        {
-            let next_segment_x_copy = next_position.x;
-            let next_segment_y_copy = next_position.y;
-            let next_segment_order_copy = next_segment_number.0;
-            next_position.y = prev_segment_y;
-            next_position.x = prev_segment_x;
-            prev_segment_x = next_segment_x_copy;
-            prev_segment_y = next_segment_y_copy;
-            prev_segment_order = next_segment_order_copy;
-        }
+    while let Some((next_snake_id, next_segment_number, mut next_position, next_direction)) =
+        query.iter_mut().find(|x| x.1 .0 == prev_segment_order + 1)
+    {
+        let next_segment_x_copy = next_position.x;
+        let next_segment_y_copy = next_position.y;
+        let next_segment_order_copy = next_segment_number.0;
+        next_position.y = prev_segment_y;
+        next_position.x = prev_segment_x;
+        prev_segment_x = next_segment_x_copy;
+        prev_segment_y = next_segment_y_copy;
+        prev_segment_order = next_segment_order_copy;
     }
 }
 
