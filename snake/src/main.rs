@@ -32,7 +32,9 @@ impl Plugin for SnakePlugin {
             .add_startup_system(spawn_food)
             .add_startup_system(load_assets)
             .add_system(take_keyboard_input)
+            .add_event::<Grow>()
             .add_system(eat)
+            .add_system(grow)
             .add_system_set(
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(0.2))
@@ -201,8 +203,33 @@ fn spawn_food(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
+struct Grow;
+
+fn grow(
+    mut commands: Commands,
+    segments: Query<(&Segment, &Position)>,
+    mut growth_reader: EventReader<Grow>,
+) {
+    if growth_reader.iter().next().is_some() {
+        let tail_end = segments.iter().max_by(|a, b| a.0 .0.cmp(&b.0 .0));
+        println!("{:?}", tail_end);
+        commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.3, 0.3, 0.3),
+                    ..default()
+                },
+                ..default()
+            })
+            .insert(Snake(1))
+            .insert(Segment(tail_end.unwrap().0 .0 + 1))
+            .insert(tail_end.unwrap().1.clone());
+    }
+}
+
 fn eat(
     mut commands: Commands,
+    mut growth_writer: EventWriter<Grow>,
     food_positions: Query<(Entity, &Position), With<Food>>,
     segment_positions: Query<(&Position, &Segment)>,
 ) {
@@ -213,6 +240,7 @@ fn eat(
     let head_position = segment_positions.iter().find(|i| i.1 .0 == 0).unwrap().0;
     if head_position == food_position {
         commands.entity(entity).despawn();
+        growth_writer.send(Grow);
     }
 }
 
